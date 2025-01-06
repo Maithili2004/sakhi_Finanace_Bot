@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sakhi Finance Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+        }
+        .chat-box {
+            margin-bottom: 20px;
+            padding: 50px;
+            font-size: 16px;
+            border-radius: 5px;
+            width: 48%;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            align-items: center;
+            text-align:center;
+            margin-right: 50px ;
+        }
+        .chat-box .messages {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #fafafa;
+        }
+        .chat-box .messages .message {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .chat-box .messages .message.bot {
+            background-color: #d3f8d3;
+        }
+        .chat-box .messages .message.user {
+            background-color: #d0e7ff;
+            text-align: right;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        .input-area input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .input-area button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .input-area button:hover {
+            background-color: #45a049;
+        }
+        #language-select {
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            width: 100%;
+        }
+        #language-selection{
+            margin-bottom: 20px;
+            padding: 50px;
+            font-size: 16px;
+            border-radius: 5px;
+            width: 48%;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            align-items: center;
+            text-align:center;
+            margin-right: 50px ;
+        }
+        #language-selection button {
+        background-color: #4CAF50; /* Green */
+        color: white;
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        }
+
+        #language-selection button:hover {
+        background-color: #45a049; 
+        }
+        .header{
+            font-size: 2.5rem;
+            color: black;
+            margin-bottom: 1rem;
+            font-weight: bolder;
+            margin-right: 5px;
+            margin-left: 20px;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="header">
+    <h3>Need Assistance?<br>Get All Your Doubts Cleared Here.</h3>
+</div>
+        <!-- Language Selection -->
+        <div id="language-selection">
+            <select id="language-select">
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+                <option value="mr">Marathi</option>
+                <option value="kn">Konkani</option>
+            </select>
+            <button onclick="selectLanguage()">Select Language</button>
+        </div>
+        <!-- Chat Box -->
+        <div class="chat-box" id="chat-box" style="display: none;">
+            <div class="messages" id="messages"></div>
+            <div class="input-area">
+                <input type="text" id="user_input" placeholder="Ask me anything about finance..." />
+                <button onclick="sendMessage()">Send</button>
+                <button onclick="startSpeechRecognition()">🎤 Speak</button>
+            </div>
+        </div>
+    
+    <script>
+       let language = ''; // To store the selected language
+
+// Welcome messages in different languages
+const welcomeMessage = {
+    en: 'Hello, welcome to Sakhi Finance. How may I help you?',
+    hi: 'नमस्ते, सखी फाइनेंस में आपका स्वागत है। मैं आपकी कैसे मदद कर सकती हूँ?',
+    mr: 'नमस्कार, सखी फायनान्समध्ये आपले स्वागत आहे. मी आपली कशी मदत करू शकते?',
+    kn: 'नमस्कार, सखी फायनान्सकडे तुमका स्वागत. हांव तुमका कसें मदत करूचें?'
+};
+
+// Mapping languages to ResponsiveVoice voices
+const voiceMap = {
+    en: 'UK English Female',
+    hi: 'Hindi Female',
+    mr: 'Hindi Female', // Marathi uses the Hindi voice
+    kn: 'Hindi Female'  // Konkani uses the Hindi voice
+};
+
+// Function to select the language
+function selectLanguage() {
+    language = document.getElementById('language-select').value;
+
+    // Disable the language selection button after choice
+    document.querySelector('#language-selection button').disabled = true;
+
+    // Display and speak the welcome message
+    displayMessage(welcomeMessage[language], 'bot');
+    speakText(welcomeMessage[language], language);
+
+    // Show the chat box and hide the language selection
+    document.getElementById('language-selection').style.display = 'none';
+    document.getElementById('chat-box').style.display = 'block';
+}
+
+// Function to display a message in the chat
+function displayMessage(message, sender) {
+    const messagesDiv = document.getElementById('messages');
+    
+    // Split the message into chunks if it's too long
+    const maxLength = 250; // Maximum characters per chunk
+    const chunks = splitMessageIntoChunks(message, maxLength);
+
+    chunks.forEach((chunk, index) => {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', sender);
+        
+        // Add a prefix for bot responses
+        if (index === 0 && sender === 'bot') {
+            chunk = 'Bot: ' + chunk;
+        } else if (sender === 'user' && index === 0) {
+            chunk = 'You: ' + chunk;
+        }
+
+        messageDiv.textContent = chunk;
+        messagesDiv.appendChild(messageDiv);
+    });
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to the latest message
+}
+
+// Split long messages into chunks
+function splitMessageIntoChunks(message, maxLength) {
+    const regex = new RegExp(`.{1,${maxLength}}`, 'g'); // Break message into chunks
+    return message.match(regex) || [message]; // Return chunks or the full message if short
+}
+
+// Function to send a user message to the bot
+function sendMessage() {
+    const userInput = document.getElementById('user_input').value.trim();
+    if (!userInput) return; // Prevent sending empty messages
+
+    // Display the user's message
+    displayMessage(userInput, 'user');
+    document.getElementById('user_input').value = ''; // Clear the input field
+
+    // Fetch the bot's response from the backend
+    fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `user_input=${encodeURIComponent(userInput)}&language=${language}`,
+    })
+        .then(response => response.json())
+        .then(data => {
+            const cleanedResponse = data.response.replace(/\*/g, ''); // Remove unwanted characters
+            displayMessage(cleanedResponse, 'bot');
+            speakText(cleanedResponse, language); // Speak the bot's response
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            displayMessage('Something went wrong. Please try again.', 'bot');
+        });
+}
+
+// Function for text-to-speech
+function speakText(text, language) {
+    if (typeof responsiveVoice !== 'undefined') {
+        const voice = voiceMap[language] || 'UK English Female'; // Default to English voice
+        responsiveVoice.speak(text, voice, { rate: 1 }); // Adjust rate if needed
+    } else {
+        alert('ResponsiveVoice library is not loaded!');
+    }
+}
+
+// Function to start speech recognition
+function startSpeechRecognition() {
+    if (!('webkitSpeechRecognition' in window)) {
+        alert('Speech Recognition is not supported in this browser.');
+        return;
+    }
+
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = getSpeechRecognitionLanguage(language);
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+        const speechResult = event.results[0][0].transcript;
+        document.getElementById('user_input').value = speechResult; // Populate the input field with the recognized text
+    };
+
+    recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        alert('Speech recognition error. Please try again.');
+    };
+
+    recognition.start();
+}
+
+// Helper function to get the appropriate language for speech recognition
+function getSpeechRecognitionLanguage(langCode) {
+    const languageMap = {
+        en: 'en-US',
+        hi: 'hi-IN',
+        mr: 'mr-IN',
+        kn: 'kn-IN',
+    };
+    return languageMap[langCode] || 'en-US'; // Default to English (US)
+}
+
+    </script>
+
+    <!-- ResponsiveVoice Library -->
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=ZQZOA7fS"></script>
+</body>
+</html>
+
