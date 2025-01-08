@@ -31,7 +31,7 @@ def generate_response(user_input, language):
         "temperature": 0.5,  # Adjusted for better response variety
         "top_p": 0.95,
         "top_k": 40,
-        "max_output_tokens": 150,  # To keep responses brief
+        "max_output_tokens": 800,  # To keep responses brief
         "response_mime_type": "text/plain",
     }
 
