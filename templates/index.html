@@ -176,25 +176,19 @@ function selectLanguage() {
 // Function to display a message in the chat
 function displayMessage(message, sender) {
     const messagesDiv = document.getElementById('messages');
-    
-    // Split the message into chunks if it's too long
-    const maxLength = 250; // Maximum characters per chunk
-    const chunks = splitMessageIntoChunks(message, maxLength);
 
-    chunks.forEach((chunk, index) => {
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', sender);
-        
-        // Add a prefix for bot responses
-        if (index === 0 && sender === 'bot') {
-            chunk = 'Bot: ' + chunk;
-        } else if (sender === 'user' && index === 0) {
-            chunk = 'You: ' + chunk;
-        }
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message', sender);
 
-        messageDiv.textContent = chunk;
-        messagesDiv.appendChild(messageDiv);
-    });
+    // Add a prefix for bot responses
+    if (sender === 'bot') {
+        message = 'Bot: ' + message;
+    } else if (sender === 'user') {
+        message = 'You: ' + message;
+    }
+
+    messageDiv.textContent = message;
+    messagesDiv.appendChild(messageDiv);
 
     messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to the latest message
 }
